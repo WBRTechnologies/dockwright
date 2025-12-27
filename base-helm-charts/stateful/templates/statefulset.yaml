@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "stateful.fullname" . }}
+  labels:
+    {{ include "stateful.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{ include "stateful.selectorLabels" . | nindent 8 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{ include "stateful.labels" . | nindent 10 }}
+        {{- with .Values.podLabels }}
+        {{ toYaml . | nindent 10 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{ toYaml . | nindent 10 }}
+      {{- end }}
+      serviceAccountName: {{ include "stateful.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{ toYaml . | nindent 10 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: tcp
+              protocol: TCP
+              containerPort: {{ .Values.service.port }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ default .Values.persistentVolume.hostPath .Values.persistentVolume.mountPath}}
+          env:
+          {{- with .Values.env }}
+          {{- range $name, $val := . }}
+            - name: {{ $name | quote }}
+              value: {{ $val | quote }}
+          {{- end }}
+          {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: {{ include "stateful.fullname" . }}-local
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.persistentVolume.storage | quote }}

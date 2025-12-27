@@ -1,0 +1,41 @@
+# Binaries
+/dockwright
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build folders
+/build/
+/dist/
+/tmp/
+
+# Go
+/vendor/
+/*.log
+coverage.out
+
+# Helm artifacts
+*.tgz
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Environment / secrets
+.env
+.env.*
+
+# Swap / temp files
+*.swp
+*~
+
+# Other
+node_modules/
